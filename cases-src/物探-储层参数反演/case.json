@@ -1,0 +1,154 @@
+{
+  "id": "reservoir-inversion",
+  "sceneId": "s4",
+  "title": "储层参数反演：从地震振幅到孔隙度的井控回归",
+  "version": "1.0.0",
+  "updated": "2026-11-02",
+  "tabs": {
+    "background": {
+      "label": "专业背景",
+      "lede": "地震数据本身只记录**反射界面的波阻抗差异**，不直接记录孔隙度。反演要做的是把「反射同相轴的强弱」翻译成「储层的孔隙度、厚度、砂体展布」。这条链条上有两处硬约束：物理上振幅不是孔隙度的单调函数，数学上解不唯一。",
+      "judge": [
+        {
+          "label": "数据",
+          "value": "地震振幅体 + 测井",
+          "desc": "叠后 31 GB；18 口井的孔隙度解释"
+        },
+        {
+          "label": "任务",
+          "value": "逐点回归 φ / 厚度",
+          "desc": "输出带不确定性的参数体"
+        },
+        {
+          "label": "标签",
+          "value": "井点实测",
+          "desc": "井少、分布不均，且井多打在「好储层」上"
+        },
+        {
+          "label": "交付",
+          "value": "孔隙度体 + 可信区",
+          "desc": "圈出井控范围外推不可信的地方"
+        }
+      ],
+      "sections": [
+        {
+          "no": "01",
+          "en": "FORWARD CHAIN",
+          "title": "从孔隙度到地震道：一条可算的链",
+          "html": "<p>反演之所以可能，是因为储层参数与弹性参数之间有稳定的岩石物理关系。孔隙度增加，速度通常下降、密度略降，波阻抗随之下降——于是界面两侧的阻抗差产生反射，反射系数与子波褶积，才成为我们在剖面上看到的同相轴。</p><div class=\"figure\"><svg viewBox=\"0 18 680 196\" xmlns=\"http://www.w3.org/2000/svg\" role=\"img\" aria-label=\"正演链条\" style=\"font-family:-apple-system,'Segoe UI','Noto Sans SC','Microsoft YaHei',sans-serif\"><rect x=\"6\" y=\"30\" width=\"118\" height=\"76\" rx=\"6\" fill=\"#ffffff\" stroke=\"#e9e4d8\" stroke-width=\"1\"/><text x=\"16\" y=\"50\" font-size=\"10.4\" fill=\"#242b2e\" font-weight=\"600\">孔隙度 φ</text><text x=\"16\" y=\"68\" font-size=\"8.6\" fill=\"#79828a\" font-family=\"ui-monospace,SFMono-Regular,Consolas,'Liberation Mono',monospace\">0.05 → 0.28</text><text x=\"16\" y=\"88\" font-size=\"8.2\" fill=\"#2f7d6b\" font-family=\"ui-monospace,SFMono-Regular,Consolas,'Liberation Mono',monospace\">储层模型</text><line x1=\"127\" y1=\"68\" x2=\"134.4\" y2=\"68\" stroke=\"#9ba3a9\" stroke-width=\"1.1\" stroke-linecap=\"round\"/><polygon points=\"138,68 134,70.2 134,65.8\" fill=\"#9ba3a9\"/><rect x=\"141\" y=\"30\" width=\"118\" height=\"76\" rx=\"6\" fill=\"#ffffff\" stroke=\"#e9e4d8\" stroke-width=\"1\"/><text x=\"151\" y=\"50\" font-size=\"10.4\" fill=\"#242b2e\" font-weight=\"600\">速度 / 密度</text><text x=\"151\" y=\"68\" font-size=\"8.6\" fill=\"#79828a\" font-family=\"ui-monospace,SFMono-Regular,Consolas,'Liberation Mono',monospace\">Vp = 3.2 + 5.4φ</text><text x=\"151\" y=\"88\" font-size=\"8.2\" fill=\"#2f7d6b\" font-family=\"ui-monospace,SFMono-Regular,Consolas,'Liberation Mono',monospace\">岩石物理</text><line x1=\"262\" y1=\"68\" x2=\"269.4\" y2=\"68\" stroke=\"#9ba3a9\" stroke-width=\"1.1\" stroke-linecap=\"round\"/><polygon points=\"273,68 269,70.2 269,65.8\" fill=\"#9ba3a9\"/><rect x=\"276\" y=\"30\" width=\"118\" height=\"76\" rx=\"6\" fill=\"#ffffff\" stroke=\"#e9e4d8\" stroke-width=\"1\"/><text x=\"286\" y=\"50\" font-size=\"10.4\" fill=\"#242b2e\" font-weight=\"600\">波阻抗 Z</text><text x=\"286\" y=\"68\" font-size=\"8.6\" fill=\"#79828a\" font-family=\"ui-monospace,SFMono-Regular,Consolas,'Liberation Mono',monospace\">Z = ρ·Vp</text><text x=\"286\" y=\"88\" font-size=\"8.2\" fill=\"#2f7d6b\" font-family=\"ui-monospace,SFMono-Regular,Consolas,'Liberation Mono',monospace\">弹性参数</text><line x1=\"397\" y1=\"68\" x2=\"404.4\" y2=\"68\" stroke=\"#9ba3a9\" stroke-width=\"1.1\" stroke-linecap=\"round\"/><polygon points=\"408,68 404,70.2 404,65.8\" fill=\"#9ba3a9\"/><rect x=\"411\" y=\"30\" width=\"118\" height=\"76\" rx=\"6\" fill=\"#ffffff\" stroke=\"#e9e4d8\" stroke-width=\"1\"/><text x=\"421\" y=\"50\" font-size=\"10.4\" fill=\"#242b2e\" font-weight=\"600\">反射系数 r</text><text x=\"421\" y=\"68\" font-size=\"8.6\" fill=\"#79828a\" font-family=\"ui-monospace,SFMono-Regular,Consolas,'Liberation Mono',monospace\">r = ΔZ / 2Z</text><text x=\"421\" y=\"88\" font-size=\"8.2\" fill=\"#2f7d6b\" font-family=\"ui-monospace,SFMono-Regular,Consolas,'Liberation Mono',monospace\">界面响应</text><line x1=\"532\" y1=\"68\" x2=\"539.4\" y2=\"68\" stroke=\"#9ba3a9\" stroke-width=\"1.1\" stroke-linecap=\"round\"/><polygon points=\"543,68 539,70.2 539,65.8\" fill=\"#9ba3a9\"/><rect x=\"546\" y=\"30\" width=\"118\" height=\"76\" rx=\"6\" fill=\"#ffffff\" stroke=\"#e9e4d8\" stroke-width=\"1\"/><text x=\"556\" y=\"50\" font-size=\"10.4\" fill=\"#242b2e\" font-weight=\"600\">地震道</text><text x=\"556\" y=\"68\" font-size=\"8.6\" fill=\"#79828a\" font-family=\"ui-monospace,SFMono-Regular,Consolas,'Liberation Mono',monospace\">r ∗ 子波 + 噪声</text><text x=\"556\" y=\"88\" font-size=\"8.2\" fill=\"#2f7d6b\" font-family=\"ui-monospace,SFMono-Regular,Consolas,'Liberation Mono',monospace\">观测</text><text x=\"6\" y=\"128\" font-size=\"9\" fill=\"#9ba3a9\" font-family=\"ui-monospace,SFMono-Regular,Consolas,'Liberation Mono',monospace\" letter-spacing=\".06em\">一次具体的换算</text><text x=\"6\" y=\"146\" font-size=\"9\" fill=\"#242b2e\" font-family=\"ui-monospace,SFMono-Regular,Consolas,'Liberation Mono',monospace\">φ = 0.08</text><text x=\"156\" y=\"146\" font-size=\"9\" fill=\"#4d565b\" font-family=\"ui-monospace,SFMono-Regular,Consolas,'Liberation Mono',monospace\">Vp 3.63 km/s · ρ 2.32</text><text x=\"306\" y=\"146\" font-size=\"9\" fill=\"#4d565b\" font-family=\"ui-monospace,SFMono-Regular,Consolas,'Liberation Mono',monospace\">Z 8.42</text><text x=\"456\" y=\"146\" font-size=\"9\" fill=\"#4d565b\" font-family=\"ui-monospace,SFMono-Regular,Consolas,'Liberation Mono',monospace\">—</text><line x1=\"6\" y1=\"152\" x2=\"674\" y2=\"152\" stroke=\"#e9e4d8\" stroke-width=\"1\" stroke-linecap=\"round\"/><text x=\"6\" y=\"166\" font-size=\"9\" fill=\"#242b2e\" font-family=\"ui-monospace,SFMono-Regular,Consolas,'Liberation Mono',monospace\">φ = 0.20</text><text x=\"156\" y=\"166\" font-size=\"9\" fill=\"#4d565b\" font-family=\"ui-monospace,SFMono-Regular,Consolas,'Liberation Mono',monospace\">Vp 4.28 km/s · ρ 2.28</text><text x=\"306\" y=\"166\" font-size=\"9\" fill=\"#4d565b\" font-family=\"ui-monospace,SFMono-Regular,Consolas,'Liberation Mono',monospace\">Z 9.76</text><text x=\"456\" y=\"166\" font-size=\"9\" fill=\"#4d565b\" font-family=\"ui-monospace,SFMono-Regular,Consolas,'Liberation Mono',monospace\">r = 0.07</text><line x1=\"6\" y1=\"172\" x2=\"674\" y2=\"172\" stroke=\"#e9e4d8\" stroke-width=\"1\" stroke-linecap=\"round\"/><text x=\"6\" y=\"186\" font-size=\"9\" fill=\"#242b2e\" font-family=\"ui-monospace,SFMono-Regular,Consolas,'Liberation Mono',monospace\">φ = 0.26</text><text x=\"156\" y=\"186\" font-size=\"9\" fill=\"#4d565b\" font-family=\"ui-monospace,SFMono-Regular,Consolas,'Liberation Mono',monospace\">Vp 4.60 km/s · ρ 2.26</text><text x=\"306\" y=\"186\" font-size=\"9\" fill=\"#4d565b\" font-family=\"ui-monospace,SFMono-Regular,Consolas,'Liberation Mono',monospace\">Z 10.40</text><text x=\"456\" y=\"186\" font-size=\"9\" fill=\"#4d565b\" font-family=\"ui-monospace,SFMono-Regular,Consolas,'Liberation Mono',monospace\">r = 0.03</text><line x1=\"6\" y1=\"192\" x2=\"674\" y2=\"192\" stroke=\"#e9e4d8\" stroke-width=\"1\" stroke-linecap=\"round\"/><text x=\"6\" y=\"210\" font-size=\"9\" fill=\"#b26a39\">注意最后一行：孔隙度更大，反射系数反而更小——振幅不是孔隙度的单调函数。</text></svg></div><div class=\"figcap\"><b>图 1</b><span>正演链条与一次具体换算。注意最后一行：孔隙度更大时，若上下围岩阻抗也变了，反射系数反而可能更小。</span></div><p>这条链条是<b>可逆的，但不唯一</b>：反演是把最后一步倒推回去，而中间每一步都在丢信息。</p>"
+        },
+        {
+          "no": "02",
+          "en": "NON-UNIQUENESS",
+          "title": "为什么反演没有唯一解",
+          "html": "<p>三个原因叠加：<b>带限</b>（地震缺少 10 Hz 以下的低频，绝对阻抗无法确定）、<b>调谐</b>（薄层的厚度与孔隙度可以互相补偿，产生相同的振幅）、<b>噪声</b>（观测本身有误差）。结果是：一个振幅值对应的不是一个孔隙度，而是一条等值线。</p><div class=\"figure\"><svg viewBox=\"0 18 680 182\" xmlns=\"http://www.w3.org/2000/svg\" role=\"img\" aria-label=\"多解性与井约束\" style=\"font-family:-apple-system,'Segoe UI','Noto Sans SC','Microsoft YaHei',sans-serif\"><rect x=\"6\" y=\"6\" width=\"330\" height=\"184\" rx=\"5\" fill=\"#f8f6ef\" stroke=\"#e9e4d8\" stroke-width=\"1\"/><text x=\"16\" y=\"24\" font-size=\"9.6\" fill=\"#242b2e\" font-weight=\"600\">同一个振幅，三种储层</text><text x=\"16\" y=\"52\" font-size=\"8.8\" fill=\"#79828a\">厚 12 m，φ 0.14</text><rect x=\"130\" y=\"42\" width=\"46\" height=\"14\" rx=\"2\" fill=\"none\" stroke=\"#e9e4d8\" stroke-width=\"1\"/><rect x=\"132\" y=\"44\" width=\"42\" height=\"10\" rx=\"1\" fill=\"#2f7d6b\" opacity=\"0.44800000000000006\"/><rect x=\"188\" y=\"42\" width=\"46\" height=\"14\" rx=\"2\" fill=\"none\" stroke=\"#e9e4d8\" stroke-width=\"1\"/><rect x=\"190\" y=\"44\" width=\"42\" height=\"10\" rx=\"1\" fill=\"#2f7d6b\" opacity=\"0.44800000000000006\"/><rect x=\"246\" y=\"42\" width=\"46\" height=\"14\" rx=\"2\" fill=\"none\" stroke=\"#e9e4d8\" stroke-width=\"1\"/><rect x=\"248\" y=\"44\" width=\"42\" height=\"10\" rx=\"1\" fill=\"#2f7d6b\" opacity=\"0.44800000000000006\"/><text x=\"326\" y=\"52\" font-size=\"8.4\" fill=\"#b26a39\">→ 同一振幅</text><text x=\"16\" y=\"98\" font-size=\"8.8\" fill=\"#79828a\">厚 6 m，φ 0.20</text><rect x=\"130\" y=\"88\" width=\"46\" height=\"14\" rx=\"2\" fill=\"none\" stroke=\"#e9e4d8\" stroke-width=\"1\"/><rect x=\"132\" y=\"90\" width=\"42\" height=\"10\" rx=\"1\" fill=\"#2f7d6b\" opacity=\"0.6400000000000001\"/><rect x=\"188\" y=\"88\" width=\"46\" height=\"14\" rx=\"2\" fill=\"none\" stroke=\"#e9e4d8\" stroke-width=\"1\"/><rect x=\"190\" y=\"90\" width=\"42\" height=\"10\" rx=\"1\" fill=\"#2f7d6b\" opacity=\"0.6400000000000001\"/><rect x=\"246\" y=\"88\" width=\"46\" height=\"14\" rx=\"2\" fill=\"none\" stroke=\"#e9e4d8\" stroke-width=\"1\"/><rect x=\"248\" y=\"90\" width=\"42\" height=\"10\" rx=\"1\" fill=\"#2f7d6b\" opacity=\"0.6400000000000001\"/><text x=\"326\" y=\"98\" font-size=\"8.4\" fill=\"#b26a39\">→ 同一振幅</text><text x=\"16\" y=\"144\" font-size=\"8.8\" fill=\"#79828a\">厚 3 m，φ 0.26</text><rect x=\"130\" y=\"134\" width=\"46\" height=\"14\" rx=\"2\" fill=\"none\" stroke=\"#e9e4d8\" stroke-width=\"1\"/><rect x=\"132\" y=\"136\" width=\"42\" height=\"10\" rx=\"1\" fill=\"#2f7d6b\" opacity=\"0.8320000000000001\"/><rect x=\"188\" y=\"134\" width=\"46\" height=\"14\" rx=\"2\" fill=\"none\" stroke=\"#e9e4d8\" stroke-width=\"1\"/><rect x=\"190\" y=\"136\" width=\"42\" height=\"10\" rx=\"1\" fill=\"#2f7d6b\" opacity=\"0.8320000000000001\"/><rect x=\"246\" y=\"134\" width=\"46\" height=\"14\" rx=\"2\" fill=\"none\" stroke=\"#e9e4d8\" stroke-width=\"1\"/><rect x=\"248\" y=\"136\" width=\"42\" height=\"10\" rx=\"1\" fill=\"#2f7d6b\" opacity=\"0.8320000000000001\"/><text x=\"326\" y=\"144\" font-size=\"8.4\" fill=\"#b26a39\">→ 同一振幅</text><text x=\"16\" y=\"182\" font-size=\"8.4\" fill=\"#9ba3a9\">薄层调谐：厚度与孔隙度可以互相补偿</text><rect x=\"350\" y=\"6\" width=\"324\" height=\"184\" rx=\"5\" fill=\"#ffffff\" stroke=\"#e9e4d8\" stroke-width=\"1\"/><text x=\"360\" y=\"24\" font-size=\"9.6\" fill=\"#242b2e\" font-weight=\"600\">反演的解是一条带，不是一个点</text><line x1=\"372\" y1=\"170\" x2=\"652\" y2=\"170\" stroke=\"#dcd6c6\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"372\" y1=\"170\" x2=\"372\" y2=\"54\" stroke=\"#dcd6c6\" stroke-width=\"1\" stroke-linecap=\"round\"/><text x=\"650\" y=\"182\" font-size=\"8\" fill=\"#9ba3a9\" text-anchor=\"end\">厚度</text><text x=\"368\" y=\"56\" font-size=\"8\" fill=\"#9ba3a9\" text-anchor=\"end\">孔隙度</text><path d=\"M392 84 L404 85.245 L416 86.58 L428 88.005 L440 89.52 L452 91.125 L464 92.82 L476 94.605 L488 96.48 L500 98.445 L512 100.5 L524 102.645 L536 104.88 L548 107.205 L560 109.62 L572 112.125 L584 114.72 L596 117.405 L608 120.18 L620 123.045 L632 126 L644 129.045\" fill=\"none\" stroke=\"#b26a39\" stroke-width=\"1.8\" stroke-linejoin=\"round\" stroke-linecap=\"round\"/><path d=\"M392 68 L404 69.245 L416 70.58 L428 72.005 L440 73.52 L452 75.125 L464 76.82 L476 78.605 L488 80.48 L500 82.445 L512 84.5 L524 86.645 L536 88.88 L548 91.205 L560 93.62 L572 96.125 L584 98.72 L596 101.405 L608 104.18 L620 107.045 L632 110 L644 113.045\" fill=\"none\" stroke=\"#b26a39\" stroke-width=\"1.2\" stroke-linejoin=\"round\" stroke-linecap=\"round\" stroke-dasharray=\"4 3\"/><path d=\"M392 100 L404 101.245 L416 102.58 L428 104.005 L440 105.52 L452 107.125 L464 108.82 L476 110.605 L488 112.48 L500 114.445 L512 116.5 L524 118.645 L536 120.88 L548 123.205 L560 125.62 L572 128.125 L584 130.72 L596 133.405 L608 136.18 L620 139.045 L632 142 L644 145.045\" fill=\"none\" stroke=\"#b26a39\" stroke-width=\"1.2\" stroke-linejoin=\"round\" stroke-linecap=\"round\" stroke-dasharray=\"4 3\"/><text x=\"432\" y=\"140\" font-size=\"8.4\" fill=\"#8e5229\">等振幅曲线</text><circle cx=\"522\" cy=\"136\" r=\"4\" fill=\"#2f7d6b\"/><text x=\"530\" y=\"140\" font-size=\"8.4\" fill=\"#235f51\">井点约束</text><text x=\"360\" y=\"186\" font-size=\"8.4\" fill=\"#9ba3a9\">井越多，解被「钉」得越紧</text></svg></div><div class=\"figcap\"><b>图 2</b><span>左：不同厚度/孔隙度组合产生相同的调谐振幅。右：反演的解是一条带，井点把这条带「钉住」。</span></div><p>所以「反演」在工程上从来不是求一个唯一答案，而是<b>在井约束下求一个最可能的解，并给出不确定范围</b>。这个认识直接决定了后面流程里为什么要做井控分析。</p>"
+        },
+        {
+          "no": "03",
+          "en": "WELL CONTROL",
+          "title": "井控：可信区有多大",
+          "html": "<p>井是唯一的硬约束。井点处孔隙度是实测的，井与井之间是推断的，离井越远越不可信。把「离井距离」和「预测误差」画在一起，会得到一条单调上升的曲线——它就是可信区的边界。</p><div class=\"figure\"><svg viewBox=\"0 18 680 182\" xmlns=\"http://www.w3.org/2000/svg\" role=\"img\" aria-label=\"井控与外推\" style=\"font-family:-apple-system,'Segoe UI','Noto Sans SC','Microsoft YaHei',sans-serif\"><text x=\"6\" y=\"16\" font-size=\"9.2\" fill=\"#9ba3a9\">A · 误差随离井距离上升</text><line x1=\"60\" y1=\"168\" x2=\"310\" y2=\"168\" stroke=\"#dcd6c6\" stroke-width=\"1\" stroke-linecap=\"round\"/><line x1=\"60\" y1=\"168\" x2=\"60\" y2=\"48\" stroke=\"#dcd6c6\" stroke-width=\"1\" stroke-linecap=\"round\"/><path d=\"M68 151.385 L101.429 147.692 L134.857 142.154 L168.286 133.846 L201.714 122.769 L235.143 107.077 L268.571 86.7692 L302 61.8462\" fill=\"none\" stroke=\"#2f7d6b\" stroke-width=\"1.8\" stroke-linejoin=\"round\" stroke-linecap=\"round\"/><circle cx=\"68\" cy=\"151.385\" r=\"2.4\" fill=\"#2f7d6b\"/><circle cx=\"101.429\" cy=\"147.692\" r=\"2.4\" fill=\"#2f7d6b\"/><circle cx=\"134.857\" cy=\"142.154\" r=\"2.4\" fill=\"#2f7d6b\"/><circle cx=\"168.286\" cy=\"133.846\" r=\"2.4\" fill=\"#2f7d6b\"/><circle cx=\"201.714\" cy=\"122.769\" r=\"2.4\" fill=\"#2f7d6b\"/><circle cx=\"235.143\" cy=\"107.077\" r=\"2.4\" fill=\"#2f7d6b\"/><circle cx=\"268.571\" cy=\"86.7692\" r=\"2.4\" fill=\"#2f7d6b\"/><circle cx=\"302\" cy=\"61.8462\" r=\"2.4\" fill=\"#2f7d6b\"/><text x=\"70\" y=\"58\" font-size=\"8\" fill=\"#9ba3a9\">RMSE</text><text x=\"306\" y=\"182\" font-size=\"8\" fill=\"#9ba3a9\" text-anchor=\"end\">离井距离 →</text><text x=\"6\" y=\"188\" font-size=\"8.6\" fill=\"#9ba3a9\">外推 2 km 以上，误差可以和储层本身的厚度一个量级。</text><text x=\"350\" y=\"16\" font-size=\"9.2\" fill=\"#9ba3a9\">B · 井网密度决定可信区</text><rect x=\"350\" y=\"28\" width=\"322\" height=\"140\" rx=\"4\" fill=\"#f8f6ef\" stroke=\"#e9e4d8\" stroke-width=\"1\"/><line x1=\"372\" y1=\"34\" x2=\"372\" y2=\"162\" stroke=\"#242b2e\" stroke-width=\"1.4\" stroke-linecap=\"round\"/><circle cx=\"372\" cy=\"52\" r=\"3\" fill=\"#b26a39\"/><circle cx=\"372\" cy=\"122\" r=\"3\" fill=\"#b26a39\"/><line x1=\"450\" y1=\"34\" x2=\"450\" y2=\"162\" stroke=\"#242b2e\" stroke-width=\"1.4\" stroke-linecap=\"round\"/><circle cx=\"450\" cy=\"52\" r=\"3\" fill=\"#b26a39\"/><circle cx=\"450\" cy=\"122\" r=\"3\" fill=\"#b26a39\"/><line x1=\"528\" y1=\"34\" x2=\"528\" y2=\"162\" stroke=\"#242b2e\" stroke-width=\"1.4\" stroke-linecap=\"round\"/><circle cx=\"528\" cy=\"52\" r=\"3\" fill=\"#b26a39\"/><circle cx=\"528\" cy=\"122\" r=\"3\" fill=\"#b26a39\"/><line x1=\"606\" y1=\"34\" x2=\"606\" y2=\"162\" stroke=\"#242b2e\" stroke-width=\"1.4\" stroke-linecap=\"round\"/><circle cx=\"606\" cy=\"52\" r=\"3\" fill=\"#b26a39\"/><circle cx=\"606\" cy=\"122\" r=\"3\" fill=\"#b26a39\"/><ellipse cx=\"411\" cy=\"100\" rx=\"34\" ry=\"62\" fill=\"#2f7d6b\" opacity=\".10\"/><ellipse cx=\"489\" cy=\"100\" rx=\"34\" ry=\"62\" fill=\"#2f7d6b\" opacity=\".10\"/><ellipse cx=\"567\" cy=\"100\" rx=\"34\" ry=\"62\" fill=\"#2f7d6b\" opacity=\".10\"/><text x=\"356\" y=\"184\" font-size=\"8.4\" fill=\"#9ba3a9\">绿色圈内是井控可信区；圈外是模型「凭经验猜」的部分</text></svg></div><div class=\"figcap\"><b>图 3</b><span>左：误差随离井距离上升；右：井网密度决定可信区（绿色圈内）。</span></div><p>这也是为什么数据驱动反演在小井距区块表现很好，一到新区块就崩：不是模型不行，而是<b>那里根本没有井控</b>，任何反演都只是把低频趋势外推。</p>"
+        },
+        {
+          "no": "04",
+          "en": "EVALUATION",
+          "title": "评价：盲井，而不是回代",
+          "html": "<p>反演最常见的自欺是「用全部井训练、再用同一批井检验」，R² 可以做到 0.95，但那只是回归拟合得好。工程上必须做<b>盲井检验</b>：留出若干口井完全不参与训练，看预测孔隙度与实测的偏差。</p><div class=\"figure\"><svg viewBox=\"0 18 680 188\" xmlns=\"http://www.w3.org/2000/svg\" role=\"img\" aria-label=\"盲井检验\" style=\"font-family:-apple-system,'Segoe UI','Noto Sans SC','Microsoft YaHei',sans-serif\"><rect x=\"6\" y=\"6\" width=\"320\" height=\"194\" rx=\"5\" fill=\"#f8f6ef\" stroke=\"#e9e4d8\" stroke-width=\"1\"/><text x=\"16\" y=\"24\" font-size=\"9.4\" fill=\"#242b2e\" font-weight=\"600\">按空间分块留出 3 口井</text><line x1=\"46\" y1=\"40\" x2=\"46\" y2=\"184\" stroke=\"#2f7d6b\" stroke-width=\"1.6\" stroke-linecap=\"round\"/><circle cx=\"46\" cy=\"58\" r=\"3\" fill=\"#2f7d6b\"/><circle cx=\"46\" cy=\"92\" r=\"3\" fill=\"#2f7d6b\"/><circle cx=\"46\" cy=\"126\" r=\"3\" fill=\"#2f7d6b\"/><circle cx=\"46\" cy=\"160\" r=\"3\" fill=\"#2f7d6b\"/><line x1=\"104\" y1=\"40\" x2=\"104\" y2=\"184\" stroke=\"#2f7d6b\" stroke-width=\"1.6\" stroke-linecap=\"round\"/><circle cx=\"104\" cy=\"58\" r=\"3\" fill=\"#2f7d6b\"/><circle cx=\"104\" cy=\"92\" r=\"3\" fill=\"#2f7d6b\"/><circle cx=\"104\" cy=\"126\" r=\"3\" fill=\"#2f7d6b\"/><circle cx=\"104\" cy=\"160\" r=\"3\" fill=\"#2f7d6b\"/><line x1=\"162\" y1=\"40\" x2=\"162\" y2=\"184\" stroke=\"#b26a39\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-dasharray=\"5 4\"/><circle cx=\"162\" cy=\"58\" r=\"3\" fill=\"#fff\" stroke=\"#b26a39\" stroke-width=\"1.4\"/><circle cx=\"162\" cy=\"92\" r=\"3\" fill=\"#fff\" stroke=\"#b26a39\" stroke-width=\"1.4\"/><circle cx=\"162\" cy=\"126\" r=\"3\" fill=\"#fff\" stroke=\"#b26a39\" stroke-width=\"1.4\"/><circle cx=\"162\" cy=\"160\" r=\"3\" fill=\"#fff\" stroke=\"#b26a39\" stroke-width=\"1.4\"/><line x1=\"220\" y1=\"40\" x2=\"220\" y2=\"184\" stroke=\"#2f7d6b\" stroke-width=\"1.6\" stroke-linecap=\"round\"/><circle cx=\"220\" cy=\"58\" r=\"3\" fill=\"#2f7d6b\"/><circle cx=\"220\" cy=\"92\" r=\"3\" fill=\"#2f7d6b\"/><circle cx=\"220\" cy=\"126\" r=\"3\" fill=\"#2f7d6b\"/><circle cx=\"220\" cy=\"160\" r=\"3\" fill=\"#2f7d6b\"/><line x1=\"278\" y1=\"40\" x2=\"278\" y2=\"184\" stroke=\"#b26a39\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-dasharray=\"5 4\"/><circle cx=\"278\" cy=\"58\" r=\"3\" fill=\"#fff\" stroke=\"#b26a39\" stroke-width=\"1.4\"/><circle cx=\"278\" cy=\"92\" r=\"3\" fill=\"#fff\" stroke=\"#b26a39\" stroke-width=\"1.4\"/><circle cx=\"278\" cy=\"126\" r=\"3\" fill=\"#fff\" stroke=\"#b26a39\" stroke-width=\"1.4\"/><circle cx=\"278\" cy=\"160\" r=\"3\" fill=\"#fff\" stroke=\"#b26a39\" stroke-width=\"1.4\"/><text x=\"16\" y=\"196\" font-size=\"8.2\" fill=\"#9ba3a9\">实线 = 参与训练   虚线 = 留出做盲井</text><text x=\"150\" y=\"50\" font-size=\"8\" fill=\"#8e5229\">留出井</text><text x=\"344\" y=\"24\" font-size=\"9.4\" fill=\"#242b2e\">回代很漂亮，盲井才是真相</text><text x=\"344\" y=\"52\" font-size=\"8.8\" fill=\"#4d565b\">回代 R²（用同一批井检验）</text><rect x=\"344\" y=\"60\" width=\"250\" height=\"12\" rx=\"4\" fill=\"#efece1\"/><rect x=\"344\" y=\"60\" width=\"237.5\" height=\"12\" rx=\"4\" fill=\"#b05a51\"/><text x=\"600\" y=\"70\" font-size=\"9\" fill=\"#b05a51\" font-family=\"ui-monospace,SFMono-Regular,Consolas,'Liberation Mono',monospace\">0.95</text><text x=\"640\" y=\"70\" font-size=\"8\" fill=\"#9ba3a9\" text-anchor=\"end\">虚高</text><text x=\"344\" y=\"104\" font-size=\"8.8\" fill=\"#4d565b\">盲井 R²（留出的井）</text><rect x=\"344\" y=\"112\" width=\"250\" height=\"12\" rx=\"4\" fill=\"#efece1\"/><rect x=\"344\" y=\"112\" width=\"177.5\" height=\"12\" rx=\"4\" fill=\"#2f7d6b\"/><text x=\"600\" y=\"122\" font-size=\"9\" fill=\"#2f7d6b\" font-family=\"ui-monospace,SFMono-Regular,Consolas,'Liberation Mono',monospace\">0.71</text><text x=\"640\" y=\"122\" font-size=\"8\" fill=\"#9ba3a9\" text-anchor=\"end\">真实推广</text><text x=\"344\" y=\"150\" font-size=\"8.4\" fill=\"#79828a\">盲井 RMSE 0.031 ≈ 3 个孔隙度单位；而储层厚度本身可能只有 5—8 m。</text><text x=\"344\" y=\"166\" font-size=\"8.4\" fill=\"#b05a51\">所以「回代 R² 0.95」这种说法，在反演报告里基本等于没做验证。</text><text x=\"344\" y=\"192\" font-size=\"8.4\" fill=\"#9ba3a9\">正确的做法：按空间分块留井，留出的井完全不参与训练，也不参与低频模型。</text></svg></div><div class=\"figcap\"><b>图 4</b><span>左：按空间分块留出 3 口井；右：回代与盲井的差距——这就是「用同一批井检验」的自欺之处。</span></div><p>本案例的示范采用线性的井控回归，虽然简单，但把三件事讲清楚了：<b>属性怎么来、井怎么约束、井数怎么影响精度</b>。换成 CNN 只是把线性回归换成一个更灵活的函数，这三件事一模一样。</p>"
+        }
+      ]
+    },
+    "workflow": {
+      "label": "案例流程",
+      "title": "属性、井控、盲井：一条能验收的反演链",
+      "lead": [
+        "本案例用**道积分**（把地震道沿时间积分得到相对阻抗）作为唯一属性，因为它物理意义清楚、实现简单，能把注意力集中在「井控」而不是「模型调参」上。",
+        "示范页里拖动井数，会同时看到三件事：孔隙度体变清楚、散点变紧、井控曲线出现边际收益递减。"
+      ],
+      "stats": [
+        [
+          "工区",
+          "叠后 160 km²"
+        ],
+        [
+          "井",
+          "18 口（3—12 口参与拟合）"
+        ],
+        [
+          "属性",
+          "道积分 + 包络"
+        ],
+        [
+          "验证",
+          "留一井交叉"
+        ]
+      ],
+      "figure": {
+        "title": "五步数据流：物理边界 + 统计拟合",
+        "lead": "岩石物理决定「能反演什么」，统计模型决定「怎么反演」；缺了前者，结果会数学上漂亮、地质上荒谬。",
+        "html": "<svg viewBox=\"0 18 680 182\" xmlns=\"http://www.w3.org/2000/svg\" role=\"img\" aria-label=\"反演数据流\" style=\"font-family:-apple-system,'Segoe UI','Noto Sans SC','Microsoft YaHei',sans-serif\"><rect x=\"6\" y=\"8\" width=\"118\" height=\"72\" rx=\"6\" fill=\"#ffffff\" stroke=\"#e9e4d8\" stroke-width=\"1\"/><rect x=\"6\" y=\"8\" width=\"3\" height=\"72\" rx=\"2\" fill=\"#2f7d6b\"/><text x=\"18\" y=\"28\" font-size=\"10.2\" fill=\"#242b2e\" font-weight=\"600\">地震振幅体</text><text x=\"18\" y=\"44\" font-size=\"8.6\" fill=\"#79828a\">叠后或叠前道集</text><text x=\"77\" y=\"71\" font-size=\"8.2\" fill=\"#2f7d6b\" text-anchor=\"middle\" font-family=\"ui-monospace,SFMono-Regular,Consolas,'Liberation Mono',monospace\">31 GB</text><line x1=\"126\" y1=\"44\" x2=\"134.4\" y2=\"44\" stroke=\"#9ba3a9\" stroke-width=\"1.1\" stroke-linecap=\"round\"/><polygon points=\"138,44 134,46.2 134,41.8\" fill=\"#9ba3a9\"/><rect x=\"140\" y=\"8\" width=\"118\" height=\"72\" rx=\"6\" fill=\"#ffffff\" stroke=\"#e9e4d8\" stroke-width=\"1\"/><rect x=\"140\" y=\"8\" width=\"3\" height=\"72\" rx=\"2\" fill=\"#2f7d6b\"/><text x=\"152\" y=\"28\" font-size=\"10.2\" fill=\"#242b2e\" font-weight=\"600\">井震标定</text><text x=\"152\" y=\"44\" font-size=\"8.6\" fill=\"#79828a\">声波 + 密度 → 合成道</text><text x=\"211\" y=\"71\" font-size=\"8.2\" fill=\"#2f7d6b\" text-anchor=\"middle\" font-family=\"ui-monospace,SFMono-Regular,Consolas,'Liberation Mono',monospace\">18 口井</text><line x1=\"260\" y1=\"44\" x2=\"268.4\" y2=\"44\" stroke=\"#9ba3a9\" stroke-width=\"1.1\" stroke-linecap=\"round\"/><polygon points=\"272,44 268,46.2 268,41.8\" fill=\"#9ba3a9\"/><rect x=\"274\" y=\"8\" width=\"118\" height=\"72\" rx=\"6\" fill=\"#ffffff\" stroke=\"#e9e4d8\" stroke-width=\"1\"/><rect x=\"274\" y=\"8\" width=\"3\" height=\"72\" rx=\"2\" fill=\"#2f7d6b\"/><text x=\"286\" y=\"28\" font-size=\"10.2\" fill=\"#242b2e\" font-weight=\"600\">属性 + 道积分</text><text x=\"286\" y=\"44\" font-size=\"8.6\" fill=\"#79828a\">相对阻抗、频率、包络</text><text x=\"345\" y=\"71\" font-size=\"8.2\" fill=\"#2f7d6b\" text-anchor=\"middle\" font-family=\"ui-monospace,SFMono-Regular,Consolas,'Liberation Mono',monospace\">6 个属性</text><line x1=\"394\" y1=\"44\" x2=\"402.4\" y2=\"44\" stroke=\"#9ba3a9\" stroke-width=\"1.1\" stroke-linecap=\"round\"/><polygon points=\"406,44 402,46.2 402,41.8\" fill=\"#9ba3a9\"/><rect x=\"408\" y=\"8\" width=\"118\" height=\"72\" rx=\"6\" fill=\"#ffffff\" stroke=\"#e9e4d8\" stroke-width=\"1\"/><rect x=\"408\" y=\"8\" width=\"3\" height=\"72\" rx=\"2\" fill=\"#2f7d6b\"/><text x=\"420\" y=\"28\" font-size=\"10.2\" fill=\"#242b2e\" font-weight=\"600\">回归 / CNN</text><text x=\"420\" y=\"44\" font-size=\"8.6\" fill=\"#79828a\">属性 → φ / 厚度</text><text x=\"479\" y=\"71\" font-size=\"8.2\" fill=\"#2f7d6b\" text-anchor=\"middle\" font-family=\"ui-monospace,SFMono-Regular,Consolas,'Liberation Mono',monospace\">R² 0.62</text><line x1=\"528\" y1=\"44\" x2=\"536.4\" y2=\"44\" stroke=\"#9ba3a9\" stroke-width=\"1.1\" stroke-linecap=\"round\"/><polygon points=\"540,44 536,46.2 536,41.8\" fill=\"#9ba3a9\"/><rect x=\"542\" y=\"8\" width=\"118\" height=\"72\" rx=\"6\" fill=\"#ffffff\" stroke=\"#e9e4d8\" stroke-width=\"1\"/><rect x=\"542\" y=\"8\" width=\"3\" height=\"72\" rx=\"2\" fill=\"#41699b\"/><text x=\"554\" y=\"28\" font-size=\"10.2\" fill=\"#242b2e\" font-weight=\"600\">孔隙度体</text><text x=\"554\" y=\"44\" font-size=\"8.6\" fill=\"#79828a\">带不确定性</text><text x=\"613\" y=\"71\" font-size=\"8.2\" fill=\"#41699b\" text-anchor=\"middle\" font-family=\"ui-monospace,SFMono-Regular,Consolas,'Liberation Mono',monospace\">交付 1 套</text><text x=\"6\" y=\"104\" font-size=\"9.2\" fill=\"#79828a\">两条腿同时走：岩石物理给出「能反演什么」的边界，统计模型给出「怎么反演」。</text><text x=\"6\" y=\"118\" font-size=\"9.2\" fill=\"#b05a51\">只用统计模型、不管岩石物理，会得到「数学上很准、地质上不可能」的孔隙度体。</text><line x1=\"6\" y1=\"128\" x2=\"674\" y2=\"128\" stroke=\"#e9e4d8\" stroke-width=\"1\" stroke-linecap=\"round\"/><text x=\"6\" y=\"148\" font-size=\"8.6\" fill=\"#9ba3a9\" font-family=\"ui-monospace,SFMono-Regular,Consolas,'Liberation Mono',monospace\" letter-spacing=\".08em\">本案例示范</text><rect x=\"78\" y=\"137\" width=\"113.18\" height=\"17\" rx=\"8.5\" fill=\"#e6f1ec\"/><text x=\"134.59\" y=\"148.74\" font-size=\"9\" fill=\"#235f51\" text-anchor=\"middle\">道积分反演 → 井控回归 → 盲井检验</text><text x=\"296\" y=\"148\" font-size=\"9\" fill=\"#9ba3a9\">岩石物理换算与训练用工程口径描述。</text><text x=\"6\" y=\"172\" font-size=\"9\" fill=\"#b26a39\">井控曲线：井数从 3 加到 12，验证 R² 从 0.31 升到 0.71，再加井收益迅速变小。</text></svg>",
+        "caption": "本案例示范的是第三到第五步：属性 → 回归 → 井控与盲井检验。"
+      },
+      "steps": [
+        {
+          "name": "井震标定与子波提取",
+          "role": "数据",
+          "do": "用声波 + 密度曲线做合成记录，与井旁地震道互相关，提取子波（相位、主频），并做时深转换。",
+          "effect": "井震吻合度 0.78，子波主频 28 Hz，相位 −12°。",
+          "trap": "直接用理论 Ricker 子波。实际子波有相位残留，相位差 30° 会让反演结果整体偏移。"
+        },
+        {
+          "name": "属性计算：道积分",
+          "role": "特征",
+          "do": "每口井给出平滑阻抗曲线作为低频模型（井间线性插值）；地震道沿时间积分得到相对阻抗的高频部分，两者合成相对阻抗，再叠加包络、瞬时频率两个辅助属性。",
+          "effect": "相对阻抗与井点孔隙度的相关系数 −0.62（负相关：孔隙度大，阻抗低）。",
+          "trap": "不做去趋势。积分会把噪声累积成一条缓慢漂移的基线，反演结果出现整片的假高低。"
+        },
+        {
+          "name": "井控回归",
+          "role": "模型",
+          "do": "在井点处取（属性，孔隙度）样本对，做最小二乘线性回归；样本按井分层加权，避免厚层主导。",
+          "effect": "3 口井 R²=0.31，8 口井 R²=0.58，12 口井 R²=0.71。",
+          "trap": "把所有井的样本混在一起不做分层。不同层的压实趋势不同，混起来会得到一个「谁都不像」的平均关系。"
+        },
+        {
+          "name": "全区预测与可信区",
+          "role": "推断",
+          "do": "把回归应用到全区，得到孔隙度体；同时计算「到最近井的距离」，把 >2 km 的区域标为外推区。",
+          "effect": "井控可信区占工区 54%，外推区 46%。",
+          "trap": "只输出孔隙度体不输出可信区。使用者会把外推区当成实测，井位部署直接踩坑。"
+        },
+        {
+          "name": "盲井检验",
+          "role": "验证",
+          "do": "按空间分块留出 3 口井，用其余井训练后预测这 3 口井，统计 RMSE 与偏差；如偏差随深度系统变化，说明压实趋势没处理好。",
+          "effect": "盲井 RMSE 0.031（孔隙度绝对误差约 3 个孔隙度单位）。",
+          "trap": "随机留井。相邻井高度相似，随机留出的井等于「抄答案」，盲井误差会被严重低估。"
+        }
+      ],
+      "metrics": {
+        "title": "本案例的验收口径",
+        "html": "<table style=\"width:100%;border-collapse:collapse;margin:10px 0 2px;table-layout:fixed\"><thead><tr><th style=\"padding:6px 9px;border-bottom:1px solid #e9e4d8;background:#f5f2ea;text-align:left;font-family:ui-monospace,SFMono-Regular,Consolas,'Liberation Mono',monospace;font-size:9px;letter-spacing:.06em;color:#9ba3a9;font-weight:500;width:26%;\">指标</th><th style=\"padding:6px 9px;border-bottom:1px solid #e9e4d8;background:#f5f2ea;text-align:left;font-family:ui-monospace,SFMono-Regular,Consolas,'Liberation Mono',monospace;font-size:9px;letter-spacing:.06em;color:#9ba3a9;font-weight:500;width:30%;\">本案例取值</th><th style=\"padding:6px 9px;border-bottom:1px solid #e9e4d8;background:#f5f2ea;text-align:left;font-family:ui-monospace,SFMono-Regular,Consolas,'Liberation Mono',monospace;font-size:9px;letter-spacing:.06em;color:#9ba3a9;font-weight:500;width:44%;\">用途</th></tr></thead><tbody><tr><td style=\"padding:7px 9px;border-bottom:1px solid #e9e4d8;color:#4d565b;vertical-align:top;line-height:1.6;font-size:11.5px;\">盲井 RMSE</td><td style=\"padding:7px 9px;border-bottom:1px solid #e9e4d8;color:#4d565b;vertical-align:top;line-height:1.6;font-size:11.5px;\">0.031（约 3 p.u.）</td><td style=\"padding:7px 9px;border-bottom:1px solid #e9e4d8;color:#4d565b;vertical-align:top;line-height:1.6;font-size:11.5px;\">验收主指标</td></tr><tr><td style=\"padding:7px 9px;border-bottom:1px solid #e9e4d8;color:#4d565b;vertical-align:top;line-height:1.6;font-size:11.5px;\">R²（12 口井）</td><td style=\"padding:7px 9px;border-bottom:1px solid #e9e4d8;color:#4d565b;vertical-align:top;line-height:1.6;font-size:11.5px;\">0.71</td><td style=\"padding:7px 9px;border-bottom:1px solid #e9e4d8;color:#4d565b;vertical-align:top;line-height:1.6;font-size:11.5px;\">只说明拟合，不说明推广</td></tr><tr><td style=\"padding:7px 9px;border-bottom:1px solid #e9e4d8;color:#4d565b;vertical-align:top;line-height:1.6;font-size:11.5px;\">可信区占比</td><td style=\"padding:7px 9px;border-bottom:1px solid #e9e4d8;color:#4d565b;vertical-align:top;line-height:1.6;font-size:11.5px;\">54%</td><td style=\"padding:7px 9px;border-bottom:1px solid #e9e4d8;color:#4d565b;vertical-align:top;line-height:1.6;font-size:11.5px;\">决定成果能用在哪</td></tr><tr><td style=\"padding:7px 9px;border-bottom:1px solid #e9e4d8;color:#4d565b;vertical-align:top;line-height:1.6;font-size:11.5px;\">井控曲线拐点</td><td style=\"padding:7px 9px;border-bottom:1px solid #e9e4d8;color:#4d565b;vertical-align:top;line-height:1.6;font-size:11.5px;\">约 8 口井</td><td style=\"padding:7px 9px;border-bottom:1px solid #e9e4d8;color:#4d565b;vertical-align:top;line-height:1.6;font-size:11.5px;\">再加井的收益迅速变小</td></tr></tbody></table>"
+      },
+      "fails": [
+        {
+          "name": "孔隙度体出现「负值」",
+          "why": "线性回归没有物理边界，外推时会给出小于 0 或大于 0.4 的值。对策是加物理约束（截断 + 单调性），或改用带约束的回归。"
+        },
+        {
+          "name": "薄层被抹平",
+          "why": "地震带限，薄层调谐使反演结果纵向分辨率不足，两个薄层被合成一个厚层。对策是叠前反演或井震联合高分辨率处理，而不是调模型。"
+        },
+        {
+          "name": "外推区自信地错",
+          "why": "远离井的区域，回归仍然给出一个「确定的数」。对策是输出可信区与不确定度，并在地质认识上做人工兜底。"
+        }
+      ]
+    },
+    "demo": {
+      "label": "案例演示",
+      "intro": "拖动井数，看孔隙度体如何从「一片糊」变清楚，R² 如何出现边际收益递减；散点图展示井点样本与拟合线的关系。",
+      "height": 940
+    }
+  },
+  "status": "ready"
+}

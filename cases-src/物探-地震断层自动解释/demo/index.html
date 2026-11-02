@@ -1,0 +1,103 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>断层概率体与阈值扫描</title>
+<link rel="stylesheet" href="demo.css">
+</head>
+<body>
+<div class="wrap">
+
+  <div class="eyebrow">DEMO 01 · 物探 / 地震断层自动解释</div>
+  <h1>阈值从 0.30 挪到 0.80：<em>漏解释</em>与<em>乱解释</em>在两端等你</h1>
+  <p class="lede">下面是一条合成的二维地震剖面，含三条正/逆断层。红色深浅表示断层概率，深红等值线是当前阈值的边界，绿色虚线是真实断层面。
+    拖动阈值，看召回与误检如何互换；再切换证据源，比较<b>相干属性</b>与<b>模型概率体</b>各自在什么地方撒谎。</p>
+
+  <div class="stage">
+    <div class="stack">
+
+      <div class="card">
+        <div class="hd"><span class="ttl">地震剖面 · 断层概率叠加</span><span class="sub" id="srcTag">MODEL PROBABILITY</span></div>
+        <div class="bd">
+          <div class="cvbox"><canvas id="sec"></canvas><div class="hint">CDP → · 时间 ↓</div></div>
+          <div class="lg">
+            <span><i style="background:#26343d"></i>振幅正</span>
+            <span><i style="background:#b0bfc7"></i>振幅负</span>
+            <span><i style="background:#b05a51;opacity:.55"></i>断层概率</span>
+            <span><i class="line" style="border-color:#8e3a2e"></i>阈值等值线</span>
+            <span><i class="dash" style="border-color:#2f7d6b"></i>真实断面</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <div class="hd"><span class="ttl">P–R 曲线</span><span class="sub">THRESHOLD SWEEP</span></div>
+          <div class="bd"><canvas id="pr"></canvas>
+            <p class="cap">曲线由 46 个阈值点算出；圆点是当前阈值。左上角才是理想区。</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="hd"><span class="ttl">概率分布：两类有多重叠</span><span class="sub">SEPARABILITY</span></div>
+          <div class="bd"><canvas id="hist"></canvas>
+            <p class="cap">两条曲线各自归一化。重叠面积就是「无论怎么选阈值都会错」的那部分。</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="stack">
+      <div class="panel">
+        <div class="ph">控制台 <span>CONTROLS</span></div>
+        <div class="pb">
+          <div class="ctl">
+            <label class="lab" for="thr"><span>断层判定阈值</span><b id="thrOut">0.50</b></label>
+            <input type="range" id="thr" min="0.10" max="0.92" step="0.01" value="0.50">
+          </div>
+          <div class="ctl">
+            <div class="lab"><span>证据源</span></div>
+            <div class="seg" id="srcSeg">
+              <button data-src="dl" class="on">模型概率</button>
+              <button data-src="coh">相干属性</button>
+            </div>
+          </div>
+          <div class="ctl">
+            <div class="lab"><span>叠加显示</span></div>
+            <div class="seg" id="viewSeg">
+              <button data-view="overlay" class="on">检出 + 真值</button>
+              <button data-view="clean">只看地震</button>
+            </div>
+          </div>
+          <div class="readout">
+            <div class="ro"><div class="l">召回 R</div><div class="v" id="roR">—</div></div>
+            <div class="ro"><div class="l">精确 P</div><div class="v" id="roP">—</div></div>
+            <div class="ro"><div class="l">F1</div><div class="v" id="roF">—</div></div>
+            <div class="ro"><div class="l">断层条数</div><div class="v" id="roN">—</div></div>
+            <div class="ro span2"><div class="l">误检体素 / 漏检体素</div><div class="v" id="roErr">—</div></div>
+          </div>
+          <div class="tagrow">
+            <span class="tag">合成剖面 340×210</span>
+            <span class="tag gray">概率体为模拟输出</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="note" id="note">拖动阈值试试。</div>
+      <div class="note plain" style="font-size:10.6px">
+        <b>说明</b>：剖面由层状模型 + 三组断层错断正演，再与 Ricker 子波褶积合成；
+        「相干属性」是对该剖面真实计算的三道窗口相似度；「模型概率」为按断层面 + 两类典型误判（亮点、噪声）构造的模拟输出，
+        用于演示阈值决策，不是真实网络推理。
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <span>SEISMIC FAULT · 阈值决策示范</span>
+    <span>人工解释 2—4 周 → 推理 6 h + 质检 2 天</span>
+  </div>
+</div>
+<script src="demo.js"></script>
+</body>
+</html>

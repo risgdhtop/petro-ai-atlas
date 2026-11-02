@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>井控反演：井数如何决定可信度</title>
+<link rel="stylesheet" href="demo.css">
+</head>
+<body>
+<div class="wrap">
+
+  <div class="eyebrow">DEMO 04 · 物探 / 储层参数反演</div>
+  <h1>从振幅到孔隙度：<em>井数</em>决定反演能信到什么程度</h1>
+  <p class="lede">上面是模型真实的孔隙度与反演结果，下面左是它能产生的地震响应。反演用的是<b>井插值的低频模型 + 地震道积分的高频</b>，再做井控回归。
+    拖动井数，看右边怎么从「一片糊」逐渐贴近左边；同时注意<b>井控曲线</b>——加到 8 口井之后，再加井几乎没用。</p>
+
+  <div class="stage">
+    <div class="stack">
+
+      <div class="card">
+        <div class="hd"><span class="ttl">真实孔隙度 vs 反演孔隙度</span><span class="sub" id="wTag">WELLS 6</span></div>
+        <div class="bd">
+          <div class="grid2">
+            <div>
+              <div class="cap" style="margin:0 0 5px"><b>真实</b>（模型输入）</div>
+              <div class="cvbox"><canvas id="ct"></canvas></div>
+            </div>
+            <div>
+              <div class="cap" style="margin:0 0 5px"><b>反演</b>（低频模型 + 地震高频）<span id="predTag"></span></div>
+              <div class="cvbox"><canvas id="cp"></canvas></div>
+            </div>
+          </div>
+          <div class="lg">
+            <span><i style="background:#1f6e5c"></i>孔隙度高</span>
+            <span><i style="background:#f7f4ea"></i>孔隙度低</span>
+            <span><i class="line" style="border-color:#b26a39"></i>井位</span>
+            <span><i style="background:rgba(176,90,81,.25)"></i>外推区（离井 &gt; 2 km）</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <div class="hd"><span class="ttl" id="obsTitle">地震振幅（观测）</span><span class="sub" id="obsSub">SEISMIC</span></div>
+          <div class="bd"><canvas id="cs"></canvas>
+            <p class="cap">反演要做的，就是把这幅「条纹图」还原成左上角那幅「团块图」。</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="hd"><span class="ttl">井点样本与拟合</span><span class="sub">ATTR → φ</span></div>
+          <div class="bd"><canvas id="scatter"></canvas>
+            <p class="cap">每个点是一口井上的一个采样点；橙色线是最小二乘拟合。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="hd"><span class="ttl">井控曲线：井数 vs 验证 R²</span><span class="sub">MARGINAL GAIN</span></div>
+        <div class="bd"><canvas id="curve"></canvas></div>
+      </div>
+
+    </div>
+
+    <div class="stack">
+      <div class="panel">
+        <div class="ph">控制台 <span>CONTROLS</span></div>
+        <div class="pb">
+          <div class="ctl">
+            <label class="lab" for="wells"><span>参与拟合的井数</span><b id="wellsOut">6</b></label>
+            <input type="range" id="wells" min="2" max="12" step="1" value="6">
+          </div>
+          <div class="ctl">
+            <label class="lab" for="noise"><span>地震噪声</span><b id="noiseOut">0.20</b></label>
+            <input type="range" id="noise" min="0" max="1" step="0.02" value="0.2">
+          </div>
+          <div class="ctl">
+            <div class="lab"><span>显示</span></div>
+            <div class="seg sm" id="viewSeg">
+              <button data-view="map" class="on">反演结果</button>
+              <button data-view="res">残差图</button>
+            </div>
+          </div>
+          <div class="readout">
+            <div class="ro"><div class="l">全区 R²</div><div class="v" id="roR2">—</div></div>
+            <div class="ro"><div class="l">盲井 RMSE</div><div class="v" id="roRmse">—</div></div>
+            <div class="ro"><div class="l">外推区误差</div><div class="v" id="roFar">—</div></div>
+            <div class="ro"><div class="l">可信区占比</div><div class="v" id="roTrust">—</div></div>
+          </div>
+          <div class="tagrow">
+            <span class="tag">260 × 150 网格</span>
+            <span class="tag gray">道积分 + 线性回归</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="note" id="note">先把井数拉到 2，再拉到 12，对比右边的图。</div>
+
+      <div class="note plain" style="font-size:10.6px">
+        <b>说明</b>：孔隙度体由「背景趋势 + 两套河道 + 一个朵体」合成；地震道由阻抗→反射系数→Ricker 子波褶积正演并加噪。
+        反演分两步：井上平滑阻抗做<b>低频模型</b>（井间线性插值），地震道积分做<b>高频修正</b>，再在井点做最小二乘回归。
+        全程真实计算；真实项目会换成叠前反演或 CNN，但「井控决定可信度」这个结论不变。
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <span>RESERVOIR INVERSION · 井控与盲井</span>
+    <span>盲井 RMSE ≈ 3 个孔隙度单位</span>
+  </div>
+</div>
+<script src="demo.js"></script>
+</body>
+</html>

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>地震相分类与边界效应</title>
+<link rel="stylesheet" href="demo.css">
+</head>
+<body>
+<div class="wrap">
+
+  <div class="eyebrow">DEMO 02 · 物探 / 地震相智能分类</div>
+  <h1>噪声一加，<em>相带边界</em>先崩：错误不是均匀分布的</h1>
+  <p class="lede">这是一条拉平到层位后的地震剖面，横向四种相带：席状砂、河道砂、前积砂、泥岩。
+    每条道用一个 100 采样点的窗口做分类。加大噪声，观察准确率怎么掉、以及<b>错误集中在哪</b>——
+    相带边界处的混合波形，才是模型真正分不开的地方。</p>
+
+  <div class="stage">
+    <div class="stack">
+
+      <div class="card">
+        <div class="hd"><span class="ttl">拉平剖面 · 相带与分类结果</span><span class="sub" id="hzTag">NOISE 0.20</span></div>
+        <div class="bd">
+          <div class="cvbox"><canvas id="sec"></canvas><div class="hint">鼠标移到剖面上看单道</div></div>
+          <div class="lg">
+            <span><i style="background:#2f7d6b"></i>席状砂</span>
+            <span><i style="background:#b26a39"></i>河道砂</span>
+            <span><i style="background:#41699b"></i>前积砂</span>
+            <span><i style="background:#8a8578"></i>泥岩</span>
+            <span><i class="line" style="border-color:#b05a51"></i>分类错误的道</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <div class="hd"><span class="ttl">混淆矩阵</span><span class="sub">ROW = TRUE</span></div>
+          <div class="bd"><canvas id="cm"></canvas>
+            <p class="cap">行是真实相带，列是预测。非对角元素几乎全部落在<b>相邻相带</b>上——这是地质上的固有模糊，不是模型没训好。</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="hd"><span class="ttl">单道分析</span><span class="sub" id="cdpTag">CDP 150</span></div>
+          <div class="bd"><canvas id="trace"></canvas>
+            <p class="cap" id="traceCap">四条概率之和为 1；熵越高，这一道越「骑墙」。</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="stack">
+      <div class="panel">
+        <div class="ph">控制台 <span>CONTROLS</span></div>
+        <div class="pb">
+          <div class="ctl">
+            <label class="lab" for="noise"><span>噪声水平</span><b id="noiseOut">0.20</b></label>
+            <input type="range" id="noise" min="0" max="1" step="0.02" value="0.2">
+          </div>
+          <div class="ctl">
+            <div class="lab"><span>显示</span></div>
+            <div class="seg" id="viewSeg">
+              <button data-view="all" class="on">剖面 + 相带</button>
+              <button data-view="err">只看错的道</button>
+            </div>
+          </div>
+          <div class="readout">
+            <div class="ro"><div class="l">总体准确率</div><div class="v" id="roAcc">—</div></div>
+            <div class="ro"><div class="l">边界带准确率</div><div class="v" id="roBnd">—</div></div>
+            <div class="ro"><div class="l">错道数</div><div class="v" id="roErr">—</div></div>
+            <div class="ro"><div class="l">平均熵</div><div class="v" id="roEnt">—</div></div>
+          </div>
+          <div class="tagrow">
+            <span class="tag">300 道 × 160 采样</span>
+            <span class="tag gray">最近邻模板分类</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="note" id="note">先把噪声拉到 0.6，看看错误都长在哪。</div>
+
+      <div class="note plain" style="font-size:10.6px">
+        <b>说明</b>：剖面由四类相带的正演响应（不同的层间距、倾角与振幅）按横向权重混合后与 Ricker 子波褶积合成；
+        分类器是「与四类干净模板求相关系数、取最大」的最近邻方法，等价于一个极简的度量学习模型。
+        真实项目用 2D/3D U-Net，但边界效应的来源相同。
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <span>SEISMIC FACIES · 边界效应示范</span>
+    <span>井点标签 1 620 个 · 覆盖率 0.3%</span>
+  </div>
+</div>
+<script src="demo.js"></script>
+</body>
+</html>

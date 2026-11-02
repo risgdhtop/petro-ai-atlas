@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>井下复杂事故前兆预警</title>
+<link rel="stylesheet" href="demo.css">
+</head>
+<body>
+<div class="wrap">
+
+  <div class="eyebrow">DEMO 06 · 钻井 / 井下复杂事故前兆预警</div>
+  <h1>五条曲线，一个分数：<em>提前量</em>和<em>误报</em>是一枚硬币的两面</h1>
+  <p class="lede">六小时的钻井参数，第 250 分钟发生井下复杂情况，前兆在第 224 分钟就开始积累。上面五条是原始通道，最下面是「偏离正常工况」的分数。
+    拖动灵敏度，看报警竖线怎么移动：阈值低，报警提前但误报多；阈值高，报警准但来得晚。</p>
+
+  <div class="stage">
+    <div class="stack">
+
+      <div class="card">
+        <div class="hd"><span class="ttl">多通道时序与异常分数</span><span class="sub" id="scTag">KICK · THR 4.0</span></div>
+        <div class="bd">
+          <div class="cvbox"><canvas id="tracks"></canvas></div>
+          <div class="lg">
+            <span><i style="background:#e9e4d8"></i>正常波动</span>
+            <span><i style="background:rgba(176,90,81,.12)"></i>异常发展阶段</span>
+            <span><i class="line" style="border-color:#b05a51"></i>报警触发</span>
+            <span><i class="dash" style="border-color:#2f7d6b"></i>事故真实发生</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <div class="hd"><span class="ttl">报警时刻的通道贡献</span><span class="sub">WHO FIRED</span></div>
+          <div class="bd"><canvas id="contrib"></canvas>
+            <p class="cap">解释「为什么报警」比报警本身更重要：司钻看到主责通道，才知道该去看哪个仪表。</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="hd"><span class="ttl">灵敏度扫描</span><span class="sub">THR → LEAD / FALSE</span></div>
+          <div class="bd"><canvas id="sweep"></canvas>
+            <p class="cap">横轴是阈值：绿色是提前量，橙色是同一条曲线上对应的误报次数；红色阴影是「怎么调都会漏报」的区间。</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="stack">
+      <div class="panel">
+        <div class="ph">控制台 <span>CONTROLS</span></div>
+        <div class="pb">
+          <div class="ctl">
+            <div class="lab"><span>事故场景</span></div>
+            <div class="seg sm" id="scnSeg">
+              <button data-s="kick" class="on">气侵</button>
+              <button data-s="loss">井漏</button>
+              <button data-s="stuck">卡钻</button>
+            </div>
+          </div>
+          <div class="ctl">
+            <label class="lab" for="thr"><span>报警灵敏度（阈值）</span><b id="thrOut">4.0</b></label>
+            <input type="range" id="thr" min="2" max="9" step="0.1" value="4">
+          </div>
+          <div class="readout">
+            <div class="ro"><div class="l">提前量</div><div class="v" id="roLead">—</div></div>
+            <div class="ro"><div class="l">误报</div><div class="v" id="roFalse">—</div></div>
+            <div class="ro"><div class="l">报警总数</div><div class="v" id="roAlarm">—</div></div>
+            <div class="ro"><div class="l">最高分</div><div class="v" id="roMax">—</div></div>
+            <div class="ro span2"><div class="l">主责通道</div><div class="v" id="roWho">—</div></div>
+          </div>
+          <div class="tagrow">
+            <span class="tag">360 min · 1 min 采样</span>
+            <span class="tag gray">EWMA 基线 + z 值</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="note" id="note">先把阈值拉到 2.5，再拉到 7。</div>
+
+      <div class="note plain" style="font-size:10.6px">
+        <b>说明</b>：五个通道由「基线 + 随机波动 + 缓慢漂移」合成，第 250 分钟起按场景加入不同形态的异常；
+        基线与 z 值是<b>真实计算</b>（EWMA 半衰期 15 min），报警要求连续 3 个采样点超限。
+        真实项目的通道更多、工况更复杂，但「提前量与误报互换」这条曲线是一样的。
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <span>DRILLING EARLY WARNING · 提前量 vs 误报</span>
+    <span>每班可接受误报约 1—2 次</span>
+  </div>
+</div>
+<script src="demo.js"></script>
+</body>
+</html>

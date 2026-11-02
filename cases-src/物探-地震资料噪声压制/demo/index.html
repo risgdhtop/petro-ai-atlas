@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>去噪：四种结果并排看</title>
+<link rel="stylesheet" href="demo.css">
+</head>
+<body>
+<div class="wrap">
+
+  <div class="eyebrow">DEMO 05 · 物探 / 地震资料噪声压制</div>
+  <h1>同一炮集，四种结果：<em>压干净</em>和<em>压过头</em>只差一步</h1>
+  <p class="lede">原始记录里混着<b>面波</b>（陡斜的强同相轴）与随机噪声。带通滤波只用频率差异，空间中值用空间连续性，
+    「只减面波」代表精确知道面波长什么样时的理想情形。对比四张图，重点看右上角——那里有没有留下有效反射。</p>
+
+  <div class="stage">
+    <div class="stack">
+      <div class="card">
+        <div class="hd"><span class="ttl">原始 → 三种处理</span><span class="sub" id="hTag">GR 0.90 · NOISE 0.20</span></div>
+        <div class="bd">
+          <div class="grid2">
+            <div>
+              <div class="cap" style="margin:0 0 5px"><b>原始记录</b>（面波 + 随机噪声）</div>
+              <div class="cvbox"><canvas id="c0"></canvas></div>
+            </div>
+            <div>
+              <div class="cap" style="margin:0 0 5px"><b>带通滤波</b>（13 点滑动平均高通）</div>
+              <div class="cvbox"><canvas id="c1"></canvas></div>
+            </div>
+            <div>
+              <div class="cap" style="margin:0 0 5px"><b>空间中值</b>（5 道中值）</div>
+              <div class="cvbox"><canvas id="c2"></canvas></div>
+            </div>
+            <div>
+              <div class="cap" style="margin:0 0 5px"><b>只减面波</b>（已知真面波）</div>
+              <div class="cvbox"><canvas id="c3"></canvas></div>
+            </div>
+          </div>
+          <div class="lg">
+            <span><i style="background:#26343d"></i>振幅正</span>
+            <span><i style="background:#b0bfc7"></i>振幅负</span>
+            <span><i style="background:#b05a51"></i>面波（陡斜强同相轴）</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <div class="hd"><span class="ttl">SNR 与保真度</span><span class="sub">METRICS</span></div>
+          <div class="bd"><canvas id="bars"></canvas>
+            <p class="cap">SNR 只说明「压得干不干净」，保真度说明「有没有压过头」。两者要一起看。</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="hd"><span class="ttl">差值剖面</span><span class="sub" id="diffTag">ORIGINAL − SPATIAL MEDIAN</span></div>
+          <div class="bd"><canvas id="diff"></canvas>
+            <p class="cap">差里如果还能看到平缓的同相轴，说明有效信号被当成噪声去掉了——这是最直接的「压过头」证据。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stack">
+      <div class="panel">
+        <div class="ph">控制台 <span>CONTROLS</span></div>
+        <div class="pb">
+          <div class="ctl">
+            <label class="lab" for="gr"><span>面波强度</span><b id="grOut">0.90</b></label>
+            <input type="range" id="gr" min="0" max="2" step="0.05" value="0.9">
+          </div>
+          <div class="ctl">
+            <label class="lab" for="noise"><span>随机噪声</span><b id="noiseOut">0.20</b></label>
+            <input type="range" id="noise" min="0" max="0.8" step="0.02" value="0.2">
+          </div>
+          <div class="ctl">
+            <div class="lab"><span>差值剖面看哪一组</span></div>
+            <div class="seg sm" id="diffSeg">
+              <button data-d="1" class="on">带通</button>
+              <button data-d="2">空间中值</button>
+              <button data-d="3">只减面波</button>
+            </div>
+          </div>
+          <div class="readout">
+            <div class="ro"><div class="l">原始 SNR</div><div class="v" id="ro0">—</div></div>
+            <div class="ro"><div class="l">带通 SNR</div><div class="v" id="ro1">—</div></div>
+            <div class="ro"><div class="l">中值 SNR</div><div class="v" id="ro2">—</div></div>
+            <div class="ro"><div class="l">只减面波 SNR</div><div class="v" id="ro3">—</div></div>
+            <div class="ro span2"><div class="l">保真度（与干净记录相关）</div><div class="v" id="roFid">—</div></div>
+          </div>
+          <div class="tagrow">
+            <span class="tag">56 道 × 240 采样</span>
+            <span class="tag gray">合成炮集</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="note" id="note">先把面波拉到 1.6，再对比带通与中值的差别。</div>
+
+      <div class="note plain" style="font-size:10.6px">
+        <b>说明</b>：炮集由三个双曲反射同相轴 + 一个线性面波（低视速度、低主频）+ 高斯随机噪声合成。
+        带通与空间中值都是<b>真实计算</b>；「只减面波」直接减去已知的面波分量，但它不处理随机噪声。
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <span>DENOISE · 压干净 vs 压过头</span>
+    <span>保真度 = 去噪结果与干净记录的相关系数</span>
+  </div>
+</div>
+<script src="demo.js"></script>
+</body>
+</html>

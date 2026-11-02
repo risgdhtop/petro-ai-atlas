@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>初至拾取：概率场 vs 能量比</title>
+<link rel="stylesheet" href="demo.css">
+</head>
+<body>
+<div class="wrap">
+
+  <div class="eyebrow">DEMO 03 · 物探 / 初至波自动拾取</div>
+  <h1>同一炮集，两种拾取：<em>误差长在哪</em>比误差多大更重要</h1>
+  <p class="lede">48 道炮集，初至是一条随偏移距上升的曲线。绿色是深度模型的概率拾取，橙色是 STA/LTA 的阈值拾取，
+    深色虚线是人工拾取的真值。加大噪声，注意<b>远偏移距先失守</b>——两种方法的失效方式还不一样。</p>
+
+  <div class="stage">
+    <div class="stack">
+
+      <div class="card">
+        <div class="hd"><span class="ttl">炮集 · 初至拾取对比</span><span class="sub" id="gTag">NOISE 0.20</span></div>
+        <div class="bd">
+          <div class="cvbox"><canvas id="gather"></canvas><div class="hint">鼠标移到道上读单道</div></div>
+          <div class="lg">
+            <span><i class="dash" style="border-color:#242b2e"></i>人工拾取（真值）</span>
+            <span><i class="line" style="border-color:#2f7d6b"></i>深度模型</span>
+            <span><i class="line" style="border-color:#b26a39"></i>STA/LTA</span>
+            <span><i style="background:rgba(47,125,107,.45)"></i>概率场</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <div class="hd"><span class="ttl">逐道误差</span><span class="sub">|PICK − TRUE| 采样</span></div>
+          <div class="bd"><canvas id="err"></canvas>
+            <p class="cap">横轴偏移距，纵轴误差。两条 2 采样虚线是命中容差；超出容差的点就是「静校正会出问题」的道。</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="hd"><span class="ttl">单道分析</span><span class="sub" id="trTag">TRACE 24</span></div>
+          <div class="bd"><canvas id="single"></canvas>
+            <p class="cap">上：波形与概率曲线；下：STA/LTA 比值曲线。两种方法在同一道上「看见」的东西完全不同。</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="stack">
+      <div class="panel">
+        <div class="ph">控制台 <span>CONTROLS</span></div>
+        <div class="pb">
+          <div class="ctl">
+            <label class="lab" for="noise"><span>噪声水平</span><b id="noiseOut">0.20</b></label>
+            <input type="range" id="noise" min="0" max="1" step="0.02" value="0.2">
+          </div>
+          <div class="ctl">
+            <label class="lab" for="pthr"><span>概率阈值（深度模型）</span><b id="pthrOut">0.50</b></label>
+            <input type="range" id="pthr" min="0.1" max="0.9" step="0.01" value="0.5">
+          </div>
+          <div class="ctl">
+            <label class="lab" for="rthr"><span>能量比阈值（STA/LTA）</span><b id="rthrOut">3.0</b></label>
+            <input type="range" id="rthr" min="1.2" max="8" step="0.1" value="3">
+          </div>
+          <div class="ctl">
+            <div class="lab"><span>显示</span></div>
+            <div class="seg sm" id="showSeg">
+              <button data-show="both" class="on">两种都看</button>
+              <button data-show="dl">只看模型</button>
+              <button data-show="sta">只看能量比</button>
+            </div>
+          </div>
+          <div class="readout">
+            <div class="ro"><div class="l">模型命中率</div><div class="v" id="roDh">—</div></div>
+            <div class="ro"><div class="l">能量比命中率</div><div class="v" id="roSh">—</div></div>
+            <div class="ro"><div class="l">模型平均误差</div><div class="v" id="roDe">—</div></div>
+            <div class="ro"><div class="l">能量比平均误差</div><div class="v" id="roSe">—</div></div>
+            <div class="ro span2"><div class="l">漏拾 / 误拾（>2 采样）</div><div class="v" id="roMiss">—</div></div>
+          </div>
+          <div class="tagrow">
+            <span class="tag">48 道 × 280 采样</span>
+            <span class="tag gray">概率场为模拟输出</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="note" id="note">先把噪声拉到 0.7，看远偏移距那几道。</div>
+
+      <div class="note plain" style="font-size:10.6px">
+        <b>说明</b>：炮集由「折射波初至 + 指数衰减的子波串 + 偏移距相关的噪声」合成；
+        STA/LTA 是对该炮集<b>真实计算</b>的短长窗能量比；深度模型的概率场按「真值附近的高斯 + 随噪声增多的伪峰」构造，
+        用于演示阈值与置信度决策，不是真实网络推理。
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <span>FIRST BREAK · 两种拾取思路</span>
+    <span>1 个采样 = 2 ms ≈ 3 m 静校正误差</span>
+  </div>
+</div>
+<script src="demo.js"></script>
+</body>
+</html>
